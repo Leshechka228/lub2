@@ -23,7 +23,6 @@ def create_annotation_file(dataset_path, annotation_file_path):
                         absolute_path = os.path.join(root, file)
                         relative_path = os.path.relpath(absolute_path, dataset_path)
                         writer.writerow([absolute_path, relative_path])
-    print("Аннотация успешно создана!")
 
 def copy_dataset_with_class_names(dataset_dir, target_dir, class_labels):
     if not os.path.exists(target_dir):
@@ -53,24 +52,68 @@ def copy_dataset_with_random_number(dataset_dir, target_dir):
             dst_file = os.path.join(target_dir, new_filename)
             shutil.copyfile(src_file, dst_file)
 
-class_labels = ['good', 'bad']
+def next_instance_of_class(class_label, dataset_path, visited_instances=set()):
+    instances = [os.path.join(root, file) for root, _, files in os.walk(os.path.join(dataset_path, class_label)) for file in files if file.endswith(".txt")]
+    for instance in instances:
+        if instance not in visited_instances:
+            visited_instances.add(instance)
+            return instance
+    return None 
 
-dataset_dir = "C:\\Users\\User\\Desktop\\dataset"
-target_dir = "C:\\Users\\User\\Desktop\\dataset\\annotation.csv"
-create_annotation_file(dataset_dir, target_dir)
+class ClassIterator:
+    def __init__(self, class_label, dataset_path):
+        self.class_label = class_label
+        self.dataset_path = dataset_path
+        self.visited_instances = set()
 
-dataset_dir = "C:\\Users\\User\\Desktop\\dataset"
-target_dir = "C:\\Users\\User\\Desktop\\copy dataset"
-copy_dataset_with_class_names(dataset_dir, target_dir, class_labels)
+    def __iter__(self):
+        return self
 
-dataset_dir = "C:\\Users\\User\\Desktop\\copy dataset"
-target_dir = "C:\\Users\\User\\Desktop\\copy dataset\\annotation.csv"
-create_annotation_file(dataset_dir, target_dir)
+    def __next__(self):
+        instances = [os.path.join(root, file) for root, _, files in os.walk(os.path.join(dataset_path, class_label)) for file in files if file.endswith(".txt")]
+        for instance in instances:
+            if instance not in self.visited_instances:
+                self.visited_instances.add(instance)
+                return instance
+        
+        raise StopIteration 
 
-dataset_dir = "C:\\Users\\User\\Desktop\\dataset"
-target_dir = "C:\\Users\\User\\Desktop\\random"
-copy_dataset_with_random_number(dataset_dir, target_dir)
+if __name__ == "__main__":
+    class_labels = ['good', 'bad']
+    home = os.path.expanduser('~')
+    home_path = os.path.join(home, "Desktop")
+    
+    dataset_dir = os.path.join(home_path, "dataset")
+    target_dir = os.path.join(home_path, "dataset\\annotation.csv")
+    create_annotation_file(dataset_dir, target_dir)
 
-dataset_dir = "C:\\Users\\User\\Desktop\\random"
-target_dir = "C:\\Users\\User\\Desktop\\random\\annotation.csv"
-create_annotation_file(dataset_dir, target_dir)
+    dataset_dir = os.path.join(home_path, "dataset")
+    target_dir = os.path.join(home_path, "copy dataset")
+    copy_dataset_with_class_names(dataset_dir, target_dir, class_labels)
+
+    dataset_dir = os.path.join(home_path, "copy dataset")
+    target_dir = os.path.join(home_path, "copy dataset\\annotation.csv")
+    create_annotation_file(dataset_dir, target_dir)
+
+    dataset_dir = os.path.join(home_path, "dataset")
+    target_dir = os.path.join(home_path, "random")
+    copy_dataset_with_random_number(dataset_dir, target_dir)
+
+    dataset_dir = os.path.join(home_path, "random")
+    target_dir = os.path.join(home_path, "random\\annotation.csv")
+    create_annotation_file(dataset_dir, target_dir)
+
+    dataset_path = os.path.join(home_path, "dataset")
+    class_label = 'good'
+
+    next_instance = next_instance_of_class(class_label, dataset_path)
+    if next_instance:
+        print(f"Следующий экземпляр класса '{class_label}': {next_instance}")
+    else:
+        print(f"Экземпляры класса '{class_label}' закончились")
+    
+    class_instance_iterator = ClassIterator(class_label, dataset_path)
+    for instance in class_instance_iterator:
+            print(f"Следующий экземпляр класса '{class_label}': {instance}")
+    else:
+        print(f"Экземпляры класса '{class_label}' закончились")
